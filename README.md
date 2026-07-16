@@ -2,6 +2,9 @@
 
 Prague football friendlies — browse games, join the main list or waiting list, and discover pitches. No WhatsApp group required.
 
+- **Live:** https://football-prg.vercel.app
+- **Repo:** https://github.com/MasterDev626/football
+
 ## Stack
 
 - Next.js (App Router) + Tailwind CSS
