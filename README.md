@@ -3,19 +3,21 @@
 Prague football friendlies — browse games, join the main list or waiting list, and discover pitches. No WhatsApp group required.
 
 - **Live:** https://football-prg.vercel.app
+- **Admin:** https://football-prg.vercel.app/admin
 - **Repo:** https://github.com/MasterDev626/football
+- **Database:** Railway project `football-prg-db` (Postgres)
 
 ## Stack
 
 - Next.js (App Router) + Tailwind CSS
-- Prisma + PostgreSQL (Neon recommended)
+- Prisma + PostgreSQL on Railway
 - Deployed on Vercel
 
 ## Local setup
 
 ```bash
 cp .env.example .env
-# set DATABASE_URL to your Neon (or other Postgres) connection string
+# set DATABASE_URL (Railway public URL), ADMIN_EMAIL, ADMIN_PASSWORD
 
 npm install
 npx prisma db push
@@ -26,6 +28,8 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 Demo organizer manage code after seed: `demo1234`
+
+Admin login uses `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`.
 
 ## Scripts
 
