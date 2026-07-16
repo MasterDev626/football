@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id        String   @id @default(cuid())
+  name      String
+  area      String
+  address   String
+  mapsUrl   String
+  surface   String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  games     Game[]
+
+  @@index([area])
+}
+
+model Game {
+  id            String   @id @default(cuid())
+  title         String
+  date          DateTime @db.Date
+  startTime     String
+  endTime       String
+  venueName     String
+  address       String
+  mapsUrl       String
+  surface       String
+  priceCzk      Int
+  format        String
+  maxPlayers    Int      @default(18)
+  subsNote      String?
+  rules         String?
+  organizerName String
+  manageCodeHash String
+  venueId       String?
+  venue         Venue?   @relation(fields: [venueId], references: [id])
+  signups       Signup[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([date])
+}
+
+model Signup {
+  id         String     @id @default(cuid())
+  gameId     String
+  game       Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name       String
+  listType   ListType   @default(MAIN)
+  position   Int
+  leaveToken String     @unique
+  createdAt  DateTime   @default(now())
+
+  @@unique([gameId, name])
+  @@index([gameId, listType])
+}
+
+enum ListType {
+  MAIN
+  WAITING
+}

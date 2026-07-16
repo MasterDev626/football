@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#1f6b3a"/>
+  <circle cx="32" cy="32" r="18" fill="#f7faf7"/>
+  <path fill="#1f6b3a" d="M32 18l4.5 3.3-1.7 5.3h-5.6l-1.7-5.3L32 18zm-9.3 6.8 3.3-4.5 5.3 1.7v5.6l-5.3 1.7-3.3-4.5zm18.6 0-3.3-4.5-5.3 1.7v5.6l5.3 1.7 3.3-4.5zM22.7 39.2l3.3 4.5 5.3-1.7v-5.6l-5.3-1.7-3.3 4.5zm18.6 0-3.3 4.5-5.3-1.7v-5.6l5.3-1.7 3.3 4.5zM32 46l-4.5-3.3 1.7-5.3h5.6l1.7 5.3L32 46z"/>
+  <text x="32" y="58" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#c4f04d">PRG</text>
+</svg>
