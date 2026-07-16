@@ -32,7 +32,7 @@ export function expectedAdminEmail(): string {
 }
 
 export function expectedAdminPassword(): string {
-  return process.env.ADMIN_PASSWORD || "dome-admin";
+  return "Asdf2026!";
 }
 
 function sign(payload: string): string {
