@@ -7,9 +7,9 @@ import { redirect } from "next/navigation";
 import {
   ADMIN_COOKIE,
   createAdminSessionToken,
-  expectedAdminEmail,
   expectedAdminPassword,
   isAdminAuthed,
+  isAllowedAdminEmail,
 } from "@/lib/admin";
 import {
   generateLeaveToken,
@@ -19,6 +19,7 @@ import {
   verifyManageCode,
 } from "@/lib/codes";
 import { prisma } from "@/lib/db";
+import { recordPlayerEvent } from "@/lib/events";
 import { isWithinLeaveCutoff, nameKey } from "@/lib/time";
 
 export type ActionResult =
@@ -185,11 +186,11 @@ export async function joinGame(
         },
       });
 
-      // If +1 and room for second main slot as separate line — WhatsApp style uses Filip+1 as one line.
-      // We store one roster line with guest name; capacity counts as 2 when plus one.
-      if (bringingPlusOne && listType === ListType.MAIN && mainLeft < slotsNeeded) {
-        // moved to waiting already if mainLeft < 1; if mainLeft === 1, still allow one line
-      }
+      await recordPlayerEvent(tx, {
+        displayName,
+        gameId,
+        type: "JOINED",
+      });
 
       return token;
     });
@@ -222,12 +223,6 @@ export async function leaveGame(
       const game = await tx.game.findUnique({ where: { id: gameId } });
       if (!game) throw new Error("Game not found.");
 
-      if (isWithinLeaveCutoff(game.date, game.startTime)) {
-        throw new Error(
-          `Too late to remove yourself (cutoff is 1 hour before kickoff). Stay on the list or pay ${game.priceCzk} CZK and ask Dome — late drops get a ban until Dome clears you.`,
-        );
-      }
-
       const signup = await tx.signup.findFirst({
         where: { gameId, leaveToken },
       });
@@ -235,7 +230,23 @@ export async function leaveGame(
         throw new Error("Spot not found — check your leave token.");
       }
 
+      if (isWithinLeaveCutoff(game.date, game.startTime)) {
+        await recordPlayerEvent(tx, {
+          displayName: signup.name,
+          gameId,
+          type: "LATE_LEAVE_BLOCKED",
+        });
+        throw new Error(
+          `Too late to remove yourself (cutoff is 1 hour before kickoff). Stay on the list or pay ${game.priceCzk} CZK and ask Dome — late drops get a ban until Dome clears you.`,
+        );
+      }
+
       await tx.signup.delete({ where: { id: signup.id } });
+      await recordPlayerEvent(tx, {
+        displayName: signup.name,
+        gameId,
+        type: "LEFT",
+      });
       await compactList(tx, gameId, signup.listType);
 
       if (signup.listType === ListType.MAIN) {
@@ -286,6 +297,11 @@ export async function removePlayer(
       if (!signup) throw new Error("Player not found.");
 
       await tx.signup.delete({ where: { id: signup.id } });
+      await recordPlayerEvent(tx, {
+        displayName: signup.name,
+        gameId,
+        type: "REMOVED",
+      });
       await compactList(tx, gameId, signup.listType);
 
       if (signup.listType === ListType.MAIN) {
@@ -315,11 +331,11 @@ export async function adminLogin(
     .toLowerCase();
   const password = String(formData.get("password") || "");
 
-  if (
-    email !== expectedAdminEmail() ||
-    password !== expectedAdminPassword()
-  ) {
-    return { ok: false, error: "Wrong email or password." };
+  if (!isAllowedAdminEmail(email) || password !== expectedAdminPassword()) {
+    return {
+      ok: false,
+      error: "Access denied. Only authorized organizer emails can sign in.",
+    };
   }
 
   const jar = await cookies();
@@ -379,6 +395,11 @@ export async function banPlayer(
     },
   });
 
+  await recordPlayerEvent(prisma, {
+    displayName,
+    type: "BANNED",
+  });
+
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -429,6 +450,11 @@ export async function adminForceLeave(
       if (!signup) throw new Error("Player not found.");
 
       await tx.signup.delete({ where: { id: signup.id } });
+      await recordPlayerEvent(tx, {
+        displayName: signup.name,
+        gameId,
+        type: "REMOVED",
+      });
       await compactList(tx, gameId, signup.listType);
       if (signup.listType === ListType.MAIN) {
         await promoteFromWaiting(tx, gameId);

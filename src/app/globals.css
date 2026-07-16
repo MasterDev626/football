@@ -1049,10 +1049,58 @@ a {
   margin-bottom: 1.25rem;
 }
 
+.admin-insight-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 @media (min-width: 720px) {
   .admin-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .admin-insight-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.insight-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.insight-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(244, 248, 244, 0.85);
+  border: 1px solid var(--line);
+}
+
+.insight-list span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.qr-fallback {
+  display: grid;
+  place-items: center;
+  width: min(220px, 100%);
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 1px dashed var(--line);
+  background: #f7faf7;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 1rem;
 }
 
 .admin-stat {

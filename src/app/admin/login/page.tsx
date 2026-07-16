@@ -13,8 +13,8 @@ export default function AdminLoginPage() {
     <div className="shell section admin-shell">
       <h1 className="page-title">Dome admin</h1>
       <p className="page-lead">
-        Private organizer view — signups, late removals, and bans. Not linked
-        from the public site.
+        Private organizer view — only MasterDevops and Dome emails can sign in.
+        Everyone else is refused.
       </p>
       <form action={formAction} className="create-form animate-rise">
         <label className="field">

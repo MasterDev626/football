@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 export function PaymentPanel({
@@ -15,6 +14,7 @@ export function PaymentPanel({
   message: string;
 }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [qrBroken, setQrBroken] = useState(false);
   const fullAccount = `${account}/${bankCode}`;
 
   async function copy(label: string, value: string) {
@@ -30,8 +30,8 @@ export function PaymentPanel({
         <span className="payment-amount">{priceCzk} CZK</span>
       </div>
       <p className="payment-lead">
-        Bank transfer or scan Revolut / SPD QR. Put the day in the message so
-        Dome can match your payment.
+        Bank transfer (or scan the QR if it loads). Put the day in the message
+        so Dome can match your payment.
       </p>
 
       <div className="payment-grid">
@@ -70,14 +70,22 @@ export function PaymentPanel({
 
         <figure className="qr-wrap">
           <div className="qr-glow" aria-hidden />
-          <Image
-            src="/revolut-qr.jpg"
-            alt="Payment QR for Dome (Revolut / bank SPD)"
-            width={220}
-            height={204}
-            className="qr-image"
-            priority
-          />
+          {!qrBroken ? (
+            // Plain img avoids Next image optimizer issues with the upload
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/revolut-qr.jpg"
+              alt="Payment QR for Dome"
+              width={220}
+              height={204}
+              className="qr-image"
+              onError={() => setQrBroken(true)}
+            />
+          ) : (
+            <div className="qr-fallback">
+              QR unavailable — use the bank details
+            </div>
+          )}
           <figcaption>Scan to pay</figcaption>
         </figure>
       </div>

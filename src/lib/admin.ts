@@ -3,6 +3,13 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const COOKIE = "football_prg_admin";
 
+/** Only these emails may open /admin. Everyone else is refused. */
+const ALLOWED_ADMIN_EMAILS = [
+  "masterdevops05@gmail.com",
+  // TODO: replace with Dome's real email when you send it
+  "dome@footballprg.cz",
+] as const;
+
 function secret(): string {
   return (
     process.env.ADMIN_SECRET ||
@@ -11,14 +18,17 @@ function secret(): string {
   );
 }
 
-/**
- * Only this email may sign in to /admin.
- * Replace when Dome shares the final address.
- */
-const HARDCODED_ADMIN_EMAIL = "masterdevops05@gmail.com";
+export function allowedAdminEmails(): string[] {
+  return ALLOWED_ADMIN_EMAILS.map((e) => e.toLowerCase());
+}
 
+export function isAllowedAdminEmail(email: string): boolean {
+  return allowedAdminEmails().includes(email.trim().toLowerCase());
+}
+
+/** @deprecated use isAllowedAdminEmail — kept for callers expecting a single email */
 export function expectedAdminEmail(): string {
-  return HARDCODED_ADMIN_EMAIL.toLowerCase();
+  return ALLOWED_ADMIN_EMAILS[0].toLowerCase();
 }
 
 export function expectedAdminPassword(): string {
@@ -45,7 +55,7 @@ export function verifyAdminSessionToken(token: string | undefined): boolean {
     const b = Buffer.from(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
     const [email, ts] = body.split(":");
-    if (email.toLowerCase() !== expectedAdminEmail()) return false;
+    if (!isAllowedAdminEmail(email)) return false;
     const age = Date.now() - Number(ts);
     if (!Number.isFinite(age) || age > 1000 * 60 * 60 * 24 * 14) return false;
     return true;

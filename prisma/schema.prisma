@@ -83,7 +83,29 @@ model Ban {
   @@index([active])
 }
 
+/// Audit trail for admin insights (regulars vs flakes).
+model PlayerEvent {
+  id          String         @id @default(cuid())
+  nameKey     String
+  displayName String
+  gameId      String?
+  type        PlayerEventType
+  createdAt   DateTime       @default(now())
+
+  @@index([nameKey])
+  @@index([type])
+  @@index([createdAt])
+}
+
 enum ListType {
   MAIN
   WAITING
+}
+
+enum PlayerEventType {
+  JOINED
+  LEFT
+  REMOVED
+  BANNED
+  LATE_LEAVE_BLOCKED
 }

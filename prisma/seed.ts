@@ -20,10 +20,19 @@ async function addSignups(
         leaveToken: nanoid(24),
       },
     });
+    await prisma.playerEvent.create({
+      data: {
+        nameKey: names[i].split("+")[0].trim().toLowerCase(),
+        displayName: names[i],
+        gameId,
+        type: "JOINED",
+      },
+    });
   }
 }
 
 async function main() {
+  await prisma.playerEvent.deleteMany();
   await prisma.signup.deleteMany();
   await prisma.game.deleteMany();
   await prisma.ban.deleteMany();

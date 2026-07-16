@@ -14,6 +14,7 @@ export function SiteHeader() {
         <nav className="nav-links" aria-label="Main">
           <Link href="/#games">Games</Link>
           <Link href="/venues">Venues</Link>
+          <Link href="/admin">Admin</Link>
           <a href="/#games" className="nav-cta">
             Join a game
           </a>
