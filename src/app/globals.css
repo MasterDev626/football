@@ -39,10 +39,14 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(1200px 500px at 10% -10%, #dff5e4 0%, transparent 55%),
-    radial-gradient(900px 420px at 100% 0%, #eef6d8 0%, transparent 45%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    radial-gradient(1000px 480px at 8% -8%, #d4f0dc 0%, transparent 55%),
+    radial-gradient(800px 400px at 100% 0%, #e8f5c8 0%, transparent 42%),
+    linear-gradient(180deg, #f7fbf7 0%, var(--bg-deep) 100%);
   background-attachment: fixed;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 a {
@@ -118,34 +122,95 @@ a {
   background: var(--pitch-deep);
 }
 
+.hero-plane {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(213, 227, 216, 0.9);
+  background:
+    linear-gradient(135deg, rgba(31, 107, 58, 0.06), transparent 45%),
+    linear-gradient(180deg, #f2faf3 0%, transparent 100%);
+}
+
+.pitch-lines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  background-image:
+    linear-gradient(90deg, transparent 0 48%, rgba(31, 107, 58, 0.35) 48% 52%, transparent 52%),
+    linear-gradient(rgba(31, 107, 58, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 107, 58, 0.12) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  mask-image: linear-gradient(180deg, #000 20%, transparent 95%);
+  pointer-events: none;
+}
+
 .hero {
   position: relative;
-  padding: 3.5rem 0 2rem;
+  padding: clamp(2.8rem, 8vw, 4.8rem) 0 2.4rem;
   overflow: hidden;
+  min-height: min(72vh, 560px);
+  display: flex;
+  align-items: center;
 }
 
 .hero-copy {
   position: relative;
   z-index: 1;
-  max-width: 36rem;
+  max-width: 38rem;
+}
+
+.hero-kicker,
+.section-kicker {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pitch);
 }
 
 .hero-brand {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 8vw, 5.2rem);
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-  margin: 0 0 1rem;
+  font-size: clamp(3.4rem, 9vw, 5.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  margin: 0 0 1.1rem;
 }
 
 .hero-brand span {
   color: var(--pitch);
+  position: relative;
+}
+
+.hero-brand span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.08em;
+  height: 0.18em;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.7;
+  z-index: -1;
+  animation: underline-sweep 3.2s ease-in-out infinite;
+}
+
+@keyframes underline-sweep {
+  0%,
+  100% {
+    transform: scaleX(0.55);
+    transform-origin: left;
+  }
+  50% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
 }
 
 .hero-lead {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.6rem;
   color: var(--ink-soft);
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   line-height: 1.55;
   max-width: 30rem;
 }
@@ -158,13 +223,15 @@ a {
 
 .hero-ball {
   position: absolute;
-  right: -2rem;
-  top: 0.5rem;
-  width: min(280px, 42vw);
-  height: min(280px, 42vw);
-  color: rgba(31, 107, 58, 0.12);
+  right: -1.5rem;
+  top: 50%;
+  translate: 0 -50%;
+  width: min(300px, 46vw);
+  height: min(300px, 46vw);
+  color: rgba(31, 107, 58, 0.14);
   animation: float-ball 7s ease-in-out infinite;
   pointer-events: none;
+  filter: drop-shadow(0 18px 30px rgba(20, 80, 40, 0.12));
 }
 
 @keyframes float-ball {
@@ -173,12 +240,13 @@ a {
     transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-12px) rotate(8deg);
+    transform: translateY(-14px) rotate(10deg);
   }
 }
 
 .section {
-  padding: 1.5rem 0 4rem;
+  padding: 2.4rem 0 4.5rem;
+  scroll-margin-top: 5rem;
 }
 
 .section-head {
@@ -187,12 +255,12 @@ a {
   align-items: end;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.4rem;
 }
 
 .section-head h2 {
   font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-size: clamp(1.7rem, 3vw, 2.1rem);
   margin: 0;
   letter-spacing: -0.03em;
 }
@@ -245,13 +313,25 @@ a {
 }
 
 .game-card {
-  padding: 1.25rem 1.3rem;
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  position: relative;
+  padding: 1.35rem 1.4rem 1.25rem;
+  overflow: hidden;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.game-card-stripe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--accent), var(--pitch));
 }
 
 .game-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 22px 44px rgba(20, 80, 40, 0.12);
+  transform: translateY(-4px);
+  border-color: #b7d9c2;
+  box-shadow: 0 26px 48px rgba(20, 80, 40, 0.14);
 }
 
 .game-card-top {
@@ -265,16 +345,16 @@ a {
 .game-card-date {
   margin: 0;
   color: var(--pitch);
-  font-weight: 700;
-  font-size: 0.92rem;
+  font-weight: 800;
+  font-size: 0.86rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .spot-pill {
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.28rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
   border-radius: 999px;
 }
 
@@ -290,9 +370,39 @@ a {
 
 .game-card-title {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   letter-spacing: -0.03em;
   margin: 0 0 0.75rem;
+}
+
+.game-card-title a:hover {
+  color: var(--pitch);
+}
+
+.fill-meter {
+  margin-top: 1rem;
+  height: 7px;
+  border-radius: 999px;
+  background: #e7efe9;
+  overflow: hidden;
+}
+
+.fill-meter-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pitch), #3f9a5a);
+  transition: width 500ms ease;
+}
+
+.fill-meter-label {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.card-cta {
+  color: var(--pitch);
+  font-weight: 700;
 }
 
 .meta-list {
@@ -692,6 +802,19 @@ a {
   padding: 2rem 0 3rem;
   color: var(--muted);
   font-size: 0.9rem;
+  border-top: 1px solid rgba(213, 227, 216, 0.8);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+}
+
+.footer-note {
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 
 .animate-rise {
@@ -1030,11 +1153,15 @@ a {
   }
 
   .hero {
-    padding-top: 2.4rem;
+    min-height: auto;
+    padding-top: 2.2rem;
+    padding-bottom: 2rem;
   }
 
   .hero-ball {
-    opacity: 0.55;
+    opacity: 0.4;
+    top: 0.4rem;
+    translate: 0 0;
   }
 
   .sticky-aside {

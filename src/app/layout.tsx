@@ -37,7 +37,10 @@ export default function RootLayout({
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <footer className="site-footer">
-          <div className="shell">Football PRG · Prague friendlies only</div>
+          <div className="shell footer-inner">
+            <span>Football PRG · Prague friendlies</span>
+            <span className="footer-note">Mon Letna · Tue & Sat Nove Butovice</span>
+          </div>
         </footer>
       </body>
     </html>

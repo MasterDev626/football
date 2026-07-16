@@ -13,8 +13,8 @@ export default function AdminLoginPage() {
     <div className="shell section admin-shell">
       <h1 className="page-title">Dome admin</h1>
       <p className="page-lead">
-        Sign in with your admin email to see who&apos;s joining, remove players
-        after cutoff, and clear bans.
+        Private organizer view — signups, late removals, and bans. Not linked
+        from the public site.
       </p>
       <form action={formAction} className="create-form animate-rise">
         <label className="field">

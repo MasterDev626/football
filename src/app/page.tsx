@@ -11,9 +11,6 @@ export const dynamic = "force-dynamic";
 function matchesDayFilter(date: Date, day: string): boolean {
   if (day === "all") return true;
   const key = weekdayKey(date);
-  if (day === "weekday") {
-    return !["friday", "saturday", "sunday"].includes(key);
-  }
   return key === day;
 }
 
@@ -38,31 +35,37 @@ export default async function HomePage({
 
   return (
     <>
-      <section className="shell hero">
-        <BallMark className="hero-ball" />
-        <div className="hero-copy animate-rise">
-          <h1 className="hero-brand">
-            Football <span>PRG</span>
-          </h1>
-          <p className="hero-lead">
-            Prague friendlies — Monday Letna, Tuesday & Saturday Nove Butovice,
-            and more. See who&apos;s coming, grab a spot, pay Dome. Not coming?
-            Just say so in the group. Joining? Do it here.
-          </p>
-          <div className="hero-actions">
-            <Link href="/games/new" className="btn-primary">
-              Post a friendly
-            </Link>
-            <Link href="/venues" className="btn-ghost">
-              Browse venues
-            </Link>
+      <section className="hero-plane">
+        <div className="pitch-lines" aria-hidden />
+        <div className="shell hero">
+          <BallMark className="hero-ball" />
+          <div className="hero-copy animate-rise">
+            <p className="hero-kicker">Prague friendlies</p>
+            <h1 className="hero-brand">
+              Football <span>PRG</span>
+            </h1>
+            <p className="hero-lead">
+              See who&apos;s playing, grab a spot on the list, pay Dome. Not
+              coming? Say so in the group. Joining? Do it here in seconds.
+            </p>
+            <div className="hero-actions">
+              <a href="#games" className="btn-primary btn-pulse">
+                See upcoming games
+              </a>
+              <Link href="/venues" className="btn-ghost">
+                Where we play
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="shell section">
+      <section className="shell section" id="games">
         <div className="section-head">
-          <h2>Upcoming games</h2>
+          <div>
+            <p className="section-kicker">This week</p>
+            <h2>Upcoming games</h2>
+          </div>
           <Suspense fallback={null}>
             <DayFilter active={day} />
           </Suspense>
@@ -72,15 +75,15 @@ export default async function HomePage({
           <div className="empty-state">
             <p>No games for this filter yet.</p>
             <p>
-              <Link href="/games/new" className="text-link">
-                Be the first to post one →
-              </Link>
+              <a href="#games" className="text-link">
+                Check All days →
+              </a>
             </p>
           </div>
         ) : (
           <div className="game-grid">
-            {filtered.map((game) => (
-              <GameCard key={game.id} game={game} />
+            {filtered.map((game, i) => (
+              <GameCard key={game.id} game={game} index={i} />
             ))}
           </div>
         )}

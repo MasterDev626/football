@@ -12,12 +12,11 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className="nav-links" aria-label="Main">
-          <Link href="/">Games</Link>
+          <Link href="/#games">Games</Link>
           <Link href="/venues">Venues</Link>
-          <Link href="/admin">Admin</Link>
-          <Link href="/games/new" className="nav-cta">
-            Post a game
-          </Link>
+          <a href="/#games" className="nav-cta">
+            Join a game
+          </a>
         </nav>
       </div>
     </header>

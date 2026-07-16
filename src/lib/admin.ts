@@ -11,8 +11,14 @@ function secret(): string {
   );
 }
 
+/**
+ * Only this email may sign in to /admin.
+ * Replace when Dome shares the final address.
+ */
+const HARDCODED_ADMIN_EMAIL = "masterdevops05@gmail.com";
+
 export function expectedAdminEmail(): string {
-  return (process.env.ADMIN_EMAIL || "dome@footballprg.cz").toLowerCase();
+  return HARDCODED_ADMIN_EMAIL.toLowerCase();
 }
 
 export function expectedAdminPassword(): string {
