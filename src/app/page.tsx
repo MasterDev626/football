@@ -45,8 +45,9 @@ export default async function HomePage({
             Football <span>PRG</span>
           </h1>
           <p className="hero-lead">
-            Prague friendlies, organized. See who&apos;s coming, grab a spot on
-            the main list, or jump on the waiting list — no group chat required.
+            Prague friendlies — Monday Letna, Tuesday & Saturday Nove Butovice,
+            and more. See who&apos;s coming, grab a spot, pay Dome. Not coming?
+            Just say so in the group. Joining? Do it here.
           </p>
           <div className="hero-actions">
             <Link href="/games/new" className="btn-primary">

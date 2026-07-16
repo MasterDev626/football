@@ -4,10 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const DAYS = [
   { key: "all", label: "All" },
-  { key: "friday", label: "Friday" },
-  { key: "saturday", label: "Saturday" },
-  { key: "sunday", label: "Sunday" },
-  { key: "weekday", label: "Weekdays" },
+  { key: "monday", label: "Mon" },
+  { key: "tuesday", label: "Tue" },
+  { key: "friday", label: "Fri" },
+  { key: "saturday", label: "Sat" },
+  { key: "sunday", label: "Sun" },
 ] as const;
 
 export function DayFilter({ active }: { active: string }) {

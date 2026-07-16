@@ -125,9 +125,27 @@ export function CreateGameForm({ venues }: { venues: VenueOption[] }) {
         <span>Subs note</span>
         <input name="subsNote" placeholder="0 sub each team" />
       </label>
+      <div className="field-grid">
+        <label className="field">
+          <span>Pay account</span>
+          <input name="paymentAccount" defaultValue="8013985001" />
+        </label>
+        <label className="field">
+          <span>Bank code</span>
+          <input name="paymentBankCode" defaultValue="5500" />
+        </label>
+        <label className="field">
+          <span>Payment message</span>
+          <input name="paymentMessage" placeholder="Tuesday" />
+        </label>
+      </div>
+      <label className="check-row">
+        <input type="checkbox" name="allowPlusOne" />
+        <span>Allow +1 (guest name required)</span>
+      </label>
       <label className="field">
         <span>Your name (organizer)</span>
-        <input name="organizerName" required placeholder="Dome" />
+        <input name="organizerName" required placeholder="Dome" defaultValue="Dome" />
       </label>
       <label className="field">
         <span>House rules</span>

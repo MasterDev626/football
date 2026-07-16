@@ -23,43 +23,64 @@ model Venue {
 }
 
 model Game {
-  id            String   @id @default(cuid())
-  title         String
-  date          DateTime @db.Date
-  startTime     String
-  endTime       String
-  venueName     String
-  address       String
-  mapsUrl       String
-  surface       String
-  priceCzk      Int
-  format        String
-  maxPlayers    Int      @default(18)
-  subsNote      String?
-  rules         String?
-  organizerName String
-  manageCodeHash String
-  venueId       String?
-  venue         Venue?   @relation(fields: [venueId], references: [id])
-  signups       Signup[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(cuid())
+  title            String
+  date             DateTime @db.Date
+  startTime        String
+  endTime          String
+  venueName        String
+  address          String
+  mapsUrl          String
+  surface          String
+  priceCzk         Int
+  format           String
+  maxPlayers       Int      @default(18)
+  subsNote         String?
+  rules            String?
+  organizerName    String
+  manageCodeHash   String
+  paymentAccount   String?
+  paymentBankCode  String?
+  paymentMessage   String?
+  allowPlusOne     Boolean  @default(false)
+  venueId          String?
+  venue            Venue?   @relation(fields: [venueId], references: [id])
+  signups          Signup[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([date])
 }
 
 model Signup {
-  id         String     @id @default(cuid())
+  id         String   @id @default(cuid())
   gameId     String
-  game       Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   name       String
-  listType   ListType   @default(MAIN)
+  guestName  String?
+  listType   ListType @default(MAIN)
   position   Int
-  leaveToken String     @unique
-  createdAt  DateTime   @default(now())
+  leaveToken String   @unique
+  createdAt  DateTime @default(now())
 
   @@unique([gameId, name])
   @@index([gameId, listType])
+}
+
+model Ban {
+  id          String    @id @default(cuid())
+  nameKey     String    @unique
+  displayName String
+  reason      String
+  feeCzk      Int       @default(0)
+  active      Boolean   @default(true)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  liftedAt    DateTime?
+  liftedBy    String?
+
+  @@index([active])
 }
 
 enum ListType {

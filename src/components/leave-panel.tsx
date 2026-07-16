@@ -5,12 +5,20 @@ import { leaveGame, type ActionResult } from "@/lib/actions";
 
 const STORAGE_PREFIX = "football-prg-leave:";
 
-export function LeavePanel({ gameId }: { gameId: string }) {
+export function LeavePanel({
+  gameId,
+  cutoffLocked,
+  priceCzk,
+}: {
+  gameId: string;
+  cutoffLocked: boolean;
+  priceCzk: number;
+}) {
   const [token, setToken] = useState<string | null>(null);
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
-    leaveGame,
-    null,
-  );
+  const [state, formAction, pending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(leaveGame, null);
 
   useEffect(() => {
     function sync() {
@@ -29,6 +37,17 @@ export function LeavePanel({ gameId }: { gameId: string }) {
   }, [state, gameId]);
 
   if (!token) return null;
+
+  if (cutoffLocked) {
+    return (
+      <div className="leave-panel leave-locked">
+        <p>
+          Leave window closed (under 1 hour to kickoff). Stay on the list, or
+          pay {priceCzk} CZK and ask Dome to clear a ban if you no-show.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form action={formAction} className="leave-panel">

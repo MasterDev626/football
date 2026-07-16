@@ -1,13 +1,44 @@
 import { PrismaClient, ListType } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { nanoid } from "nanoid";
+import { nextWeekdayDate } from "../src/lib/time";
 
 const prisma = new PrismaClient();
+
+async function addSignups(
+  gameId: string,
+  names: string[],
+  listType: ListType = ListType.MAIN,
+) {
+  for (let i = 0; i < names.length; i++) {
+    await prisma.signup.create({
+      data: {
+        gameId,
+        name: names[i],
+        listType,
+        position: i + 1,
+        leaveToken: nanoid(24),
+      },
+    });
+  }
+}
 
 async function main() {
   await prisma.signup.deleteMany();
   await prisma.game.deleteMany();
+  await prisma.ban.deleteMany();
   await prisma.venue.deleteMany();
+
+  const letna = await prisma.venue.create({
+    data: {
+      name: "Letna Park",
+      area: "Letna",
+      address: "Letenske sady, Praha 7",
+      mapsUrl: "https://maps.app.goo.gl/hPS65gxfvNNwuBci9",
+      surface: "Artificial grass 3rd gen (turf)",
+      notes: "Monday friendlies — 7vs7. You can bring +1 (name required).",
+    },
+  });
 
   const noveButovice = await prisma.venue.create({
     data: {
@@ -16,33 +47,98 @@ async function main() {
       address: "Mezi Skolami 2322, Praha 13",
       mapsUrl: "https://maps.app.goo.gl/CLAHKFApk2J4fgDT6",
       surface: "Artificial grass 3rd gen (turf, buttons)",
-      notes: "Close to Nove Butovice metro station. Popular for weekend friendlies.",
-    },
-  });
-
-  const letna = await prisma.venue.create({
-    data: {
-      name: "Letna park pitches",
-      area: "Letna",
-      address: "Letenske sady, Praha 7",
-      mapsUrl: "https://maps.app.goo.gl/8nQbYxexample",
-      surface: "Natural / mixed grass",
-      notes: "Open park kickabouts — bring a ball. Weather dependent.",
+      notes: "Close to Nove Butovice metro. Tuesday + Saturday friendlies.",
     },
   });
 
   const manageCodeHash = await hash("demo1234", 10);
 
-  // Next Saturday relative to seed run — use a fixed upcoming Saturday for demo
-  const today = new Date();
-  const day = today.getUTCDay();
-  const daysUntilSat = (6 - day + 7) % 7 || 7;
-  const saturday = new Date(today);
-  saturday.setUTCDate(today.getUTCDate() + daysUntilSat);
-  saturday.setUTCHours(12, 0, 0, 0);
+  const monday = nextWeekdayDate(1);
+  const tuesday = nextWeekdayDate(2);
+  const saturday = nextWeekdayDate(6);
 
-  const friday = new Date(saturday);
-  friday.setUTCDate(saturday.getUTCDate() - 1);
+  const mondayGame = await prisma.game.create({
+    data: {
+      title: "Monday night — Letna Park",
+      date: monday,
+      startTime: "21:00",
+      endTime: "23:00",
+      venueName: letna.name,
+      address: letna.address,
+      mapsUrl: letna.mapsUrl,
+      surface: letna.surface,
+      priceCzk: 100,
+      format: "7vs7",
+      maxPlayers: 21,
+      subsNote: "Teams 7vs7",
+      allowPlusOne: true,
+      paymentAccount: "8013985001",
+      paymentBankCode: "5500",
+      paymentMessage: "Monday",
+      rules:
+        "You can bring only +1 and I need to know the name.\nList goes up — feel free to invite a friend.\nDon't turn up on the day = banned until you pay + 1 week.\nBad behaviour and complaints on the pitch will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
+      organizerName: "Dome",
+      manageCodeHash,
+      venueId: letna.id,
+    },
+  });
+
+  await addSignups(mondayGame.id, [
+    "Filip",
+    "Filip+1",
+    "Filip+2",
+    "Ivan",
+    "Valentyn",
+    "Amir",
+    "Alex",
+    "Evgeny",
+    "Vlad",
+    "Denis",
+    "David",
+    "Yevhen+1",
+    "Wahid",
+    "Mahmud",
+    "Andrii",
+    "Yevhen",
+    "Cesar",
+    "Fernando",
+    "Adys",
+    "Amir+1",
+  ]);
+
+  const tuesdayGame = await prisma.game.create({
+    data: {
+      title: "Tuesday turf — Nove Butovice",
+      date: tuesday,
+      startTime: "17:45",
+      endTime: "20:00",
+      venueName: noveButovice.name,
+      address: noveButovice.address,
+      mapsUrl: noveButovice.mapsUrl,
+      surface: noveButovice.surface,
+      priceCzk: 60,
+      format: "9vs9",
+      maxPlayers: 18,
+      subsNote: "9vs9, each team",
+      allowPlusOne: false,
+      paymentAccount: "8013985001",
+      paymentBankCode: "5500",
+      paymentMessage: "Tuesday",
+      rules:
+        "Being on the list and not showing up on the day results in a one week ban plus 60 CZK of the missed game.\nComplaining on the pitch will not be accepted and will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
+      organizerName: "Dome",
+      manageCodeHash,
+      venueId: noveButovice.id,
+    },
+  });
+
+  await addSignups(tuesdayGame.id, [
+    "Daniel (bibs+ball)",
+    "Alex",
+    "Efrain Sandoval Gamarra",
+    "Will",
+    "Fahed",
+  ]);
 
   const saturdayGame = await prisma.game.create({
     data: {
@@ -58,15 +154,19 @@ async function main() {
       format: "9vs9",
       maxPlayers: 18,
       subsNote: "0 sub each team",
+      allowPlusOne: false,
+      paymentAccount: "8013985001",
+      paymentBankCode: "5500",
+      paymentMessage: "Saturday",
       rules:
-        "Being on the list and not showing up results in a one week ban plus 60 CZK of the missed game.\nComplaining on the pitch will not be accepted and will result in a temporary ban.",
+        "Being on the list and not showing up results in a one week ban plus 60 CZK of the missed game.\nComplaining on the pitch will not be accepted and will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
       organizerName: "Dome",
       manageCodeHash,
       venueId: noveButovice.id,
     },
   });
 
-  const names = [
+  await addSignups(saturdayGame.id, [
     "Dome (bibs+ball)",
     "antonio",
     "ricardo",
@@ -74,44 +174,13 @@ async function main() {
     "Zak",
     "Vineet",
     "Saini",
-  ];
+  ]);
 
-  for (let i = 0; i < names.length; i++) {
-    await prisma.signup.create({
-      data: {
-        gameId: saturdayGame.id,
-        name: names[i],
-        listType: ListType.MAIN,
-        position: i + 1,
-        leaveToken: nanoid(24),
-      },
-    });
-  }
-
-  await prisma.game.create({
-    data: {
-      title: "Friday evening kickabout — Letna",
-      date: friday,
-      startTime: "18:00",
-      endTime: "20:00",
-      venueName: letna.name,
-      address: letna.address,
-      mapsUrl: letna.mapsUrl,
-      surface: letna.surface,
-      priceCzk: 0,
-      format: "7vs7",
-      maxPlayers: 14,
-      subsNote: "Rolling subs",
-      rules: "Friendly vibes only. Bring water. Prague friendlies — open to all levels.",
-      organizerName: "Football PRG",
-      manageCodeHash,
-      venueId: letna.id,
-    },
-  });
-
-  console.log("Seeded venues + demo games.");
-  console.log("Demo organizer manage code: demo1234");
-  console.log(`Saturday game: /games/${saturdayGame.id}`);
+  console.log("Seeded Monday / Tuesday / Saturday friendlies.");
+  console.log("Organizer manage code: demo1234");
+  console.log(`Monday:   /games/${mondayGame.id}`);
+  console.log(`Tuesday:  /games/${tuesdayGame.id}`);
+  console.log(`Saturday: /games/${saturdayGame.id}`);
 }
 
 main()
