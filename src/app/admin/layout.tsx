@@ -28,6 +28,7 @@ export default async function AdminLayout({
           <a href="#approvals">Approvals</a>
           <a href="#players">Players</a>
           <a href="#games">Live games</a>
+          <a href="#results">Results & MOTM</a>
           <a href="#activity">Activity</a>
           <a href="#bans">Bans</a>
           <Link href="/">← Public site</Link>

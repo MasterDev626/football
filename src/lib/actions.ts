@@ -20,7 +20,9 @@ import {
 } from "@/lib/codes";
 import { prisma } from "@/lib/db";
 import { recordPlayerEvent } from "@/lib/events";
+import { parseScorerLines, VOTER_COOKIE } from "@/lib/motm";
 import { isWithinLeaveCutoff, nameKey } from "@/lib/time";
+import { nanoid } from "nanoid";
 
 export type ActionResult =
   | { ok: true; leaveToken?: string; manageCode?: string; gameId?: string }
@@ -580,4 +582,219 @@ async function promoteFromWaiting(tx: Tx, gameId: string) {
     },
   });
   await compactList(tx, gameId, ListType.WAITING);
+}
+
+export async function saveMatchResult(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Admin only." };
+  }
+
+  const gameId = String(formData.get("gameId") || "");
+  const teamAName = String(formData.get("teamAName") || "Team A").trim() || "Team A";
+  const teamBName = String(formData.get("teamBName") || "Team B").trim() || "Team B";
+  const teamAScore = Number(formData.get("teamAScore"));
+  const teamBScore = Number(formData.get("teamBScore"));
+  const scorersA = String(formData.get("scorersA") || "");
+  const scorersB = String(formData.get("scorersB") || "");
+  const notes = String(formData.get("notes") || "").trim() || null;
+  const votingOpen = formData.get("votingOpen") === "on";
+
+  if (!gameId) return { ok: false, error: "Missing game." };
+  if (
+    !Number.isFinite(teamAScore) ||
+    !Number.isFinite(teamBScore) ||
+    teamAScore < 0 ||
+    teamBScore < 0
+  ) {
+    return { ok: false, error: "Enter a valid score." };
+  }
+
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game || game.status !== "APPROVED") {
+    return { ok: false, error: "Game not found or not published." };
+  }
+
+  const goals = [
+    ...parseScorerLines(scorersA, "A"),
+    ...parseScorerLines(scorersB, "B"),
+  ];
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.matchResult.findUnique({ where: { gameId } });
+    if (existing) {
+      await tx.matchGoal.deleteMany({ where: { matchResultId: existing.id } });
+      await tx.matchResult.update({
+        where: { id: existing.id },
+        data: {
+          teamAName,
+          teamBName,
+          teamAScore,
+          teamBScore,
+          notes,
+          votingOpen: existing.motmName ? false : votingOpen,
+          goals: { create: goals },
+        },
+      });
+    } else {
+      await tx.matchResult.create({
+        data: {
+          gameId,
+          teamAName,
+          teamBName,
+          teamAScore,
+          teamBScore,
+          notes,
+          votingOpen,
+          goals: { create: goals },
+        },
+      });
+    }
+  });
+
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function voteMotm(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const gameId = String(formData.get("gameId") || "");
+  const voterName = normalizePlayerName(String(formData.get("voterName") || ""));
+  const playerName = normalizePlayerName(String(formData.get("playerName") || ""));
+
+  if (!gameId) return { ok: false, error: "Missing game." };
+  if (voterName.length < 2) return { ok: false, error: "Enter your name." };
+  if (playerName.length < 2) {
+    return { ok: false, error: "Pick a Player of the Match." };
+  }
+
+  const result = await prisma.matchResult.findUnique({
+    where: { gameId },
+    include: {
+      game: { include: { signups: true } },
+      goals: true,
+    },
+  });
+
+  if (!result) return { ok: false, error: "No result posted yet." };
+  if (!result.votingOpen || result.motmName) {
+    return { ok: false, error: "Voting is closed for this match." };
+  }
+
+  const playerNameKey = nameKey(playerName);
+  const candidates = new Set(
+    [
+      ...result.game.signups.map((s) => nameKey(s.name.split(" + ")[0])),
+      ...result.goals.map((g) => g.scorerNameKey),
+    ].filter(Boolean),
+  );
+
+  if (candidates.size > 0 && !candidates.has(playerNameKey)) {
+    return { ok: false, error: "Pick someone from this match." };
+  }
+
+  const jar = await cookies();
+  let voterKey = jar.get(VOTER_COOKIE)?.value;
+  if (!voterKey) {
+    voterKey = nanoid(24);
+    jar.set(VOTER_COOKIE, voterKey, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+
+  await prisma.motmVote.upsert({
+    where: {
+      matchResultId_voterKey: {
+        matchResultId: result.id,
+        voterKey,
+      },
+    },
+    create: {
+      matchResultId: result.id,
+      voterKey,
+      voterName,
+      playerName,
+      playerNameKey,
+    },
+    update: {
+      voterName,
+      playerName,
+      playerNameKey,
+    },
+  });
+
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function announceMotm(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Admin only." };
+  }
+
+  const gameId = String(formData.get("gameId") || "");
+  const playerName = normalizePlayerName(String(formData.get("playerName") || ""));
+  if (!gameId || playerName.length < 2) {
+    return { ok: false, error: "Pick a player to announce." };
+  }
+
+  const result = await prisma.matchResult.findUnique({ where: { gameId } });
+  if (!result) return { ok: false, error: "Post the score first." };
+
+  await prisma.matchResult.update({
+    where: { id: result.id },
+    data: {
+      motmName: playerName,
+      motmNameKey: nameKey(playerName),
+      announcedAt: new Date(),
+      votingOpen: false,
+    },
+  });
+
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function setMotmVoting(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Admin only." };
+  }
+
+  const gameId = String(formData.get("gameId") || "");
+  const open = formData.get("open") === "1";
+  if (!gameId) return { ok: false, error: "Missing game." };
+
+  const result = await prisma.matchResult.findUnique({ where: { gameId } });
+  if (!result) return { ok: false, error: "Post the score first." };
+  if (result.motmName && open) {
+    return { ok: false, error: "MOTM already announced — clear announcement first." };
+  }
+
+  await prisma.matchResult.update({
+    where: { id: result.id },
+    data: { votingOpen: open },
+  });
+
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/admin");
+  return { ok: true };
 }

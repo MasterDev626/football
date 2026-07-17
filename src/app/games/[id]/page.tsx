@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { ListType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatGameDate } from "@/lib/format";
-import { isWithinLeaveCutoff, leaveCutoffAt } from "@/lib/time";
+import { VOTER_COOKIE } from "@/lib/motm";
+import { isWithinLeaveCutoff, leaveCutoffAt, nameKey } from "@/lib/time";
 import { JoinForm } from "@/components/join-form";
 import { LeavePanel } from "@/components/leave-panel";
 import { ManageBanner } from "@/components/manage-banner";
+import { MatchResultPanel } from "@/components/match-result-panel";
 import { PaymentPanel } from "@/components/payment-panel";
 import { PlayerList } from "@/components/player-list";
 
@@ -35,7 +38,15 @@ export default async function GamePage({
 
   const game = await prisma.game.findUnique({
     where: { id },
-    include: { signups: { orderBy: { position: "asc" } } },
+    include: {
+      signups: { orderBy: { position: "asc" } },
+      matchResult: {
+        include: {
+          goals: { orderBy: { createdAt: "asc" } },
+          votes: true,
+        },
+      },
+    },
   });
 
   if (!game) notFound();
@@ -50,7 +61,25 @@ export default async function GamePage({
     formatGameDate(game.date).split(" ")[0] ||
     "Game";
   const isPending = game.status === "PENDING" || pending === "1";
-  const canJoin = game.status === "APPROVED";
+  const canJoin = game.status === "APPROVED" && !game.matchResult;
+
+  const candidates = [
+    ...new Map(
+      [
+        ...main.map((s) => s.name.split(" + ")[0].trim()),
+        ...(game.matchResult?.goals.map((g) => g.scorerName) ?? []),
+      ]
+        .filter((n) => n.length >= 2)
+        .map((n) => [nameKey(n), n] as const),
+    ).values(),
+  ].sort((a, b) => a.localeCompare(b));
+
+  const jar = await cookies();
+  const voterKey = jar.get(VOTER_COOKIE)?.value;
+  const myVote =
+    voterKey && game.matchResult
+      ? game.matchResult.votes.find((v) => v.voterKey === voterKey)
+      : null;
 
   return (
     <div className="shell detail-layout">
@@ -146,6 +175,15 @@ export default async function GamePage({
           />
         </article>
 
+        {game.matchResult ? (
+          <MatchResultPanel
+            gameId={game.id}
+            result={game.matchResult}
+            candidates={candidates}
+            alreadyVotedFor={myVote?.playerName}
+          />
+        ) : null}
+
         <PaymentPanel
           priceCzk={game.priceCzk}
           account={game.paymentAccount || "8013985001"}
@@ -164,6 +202,13 @@ export default async function GamePage({
               priceCzk={game.priceCzk}
             />
           </>
+        ) : game.matchResult ? (
+          <div className="join-form">
+            <p className="form-hint" style={{ margin: 0 }}>
+              This friendly is finished — scroll for the score and Player of the
+              Match vote.
+            </p>
+          </div>
         ) : (
           <div className="join-form">
             <p className="form-hint" style={{ margin: 0 }}>

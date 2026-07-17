@@ -53,12 +53,62 @@ model Game {
   venueId          String?
   venue            Venue?     @relation(fields: [venueId], references: [id])
   signups          Signup[]
+  matchResult      MatchResult?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
   @@index([date])
   @@index([status])
   @@index([seriesKey, date])
+}
+
+/// Final score + POTM voting for a finished friendly.
+model MatchResult {
+  id          String      @id @default(cuid())
+  gameId      String      @unique
+  game        Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  teamAName   String      @default("Team A")
+  teamBName   String      @default("Team B")
+  teamAScore  Int
+  teamBScore  Int
+  votingOpen  Boolean     @default(true)
+  motmName    String?
+  motmNameKey String?
+  announcedAt DateTime?
+  notes       String?
+  goals       MatchGoal[]
+  votes       MotmVote[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model MatchGoal {
+  id            String      @id @default(cuid())
+  matchResultId String
+  matchResult   MatchResult @relation(fields: [matchResultId], references: [id], onDelete: Cascade)
+  scorerName    String
+  scorerNameKey String
+  team          String
+  minute        Int?
+  createdAt     DateTime    @default(now())
+
+  @@index([matchResultId])
+  @@index([scorerNameKey])
+}
+
+model MotmVote {
+  id            String      @id @default(cuid())
+  matchResultId String
+  matchResult   MatchResult @relation(fields: [matchResultId], references: [id], onDelete: Cascade)
+  voterKey      String
+  voterName     String
+  playerName    String
+  playerNameKey String
+  createdAt     DateTime    @default(now())
+
+  @@unique([matchResultId, voterKey])
+  @@index([matchResultId])
+  @@index([playerNameKey])
 }
 
 model Signup {

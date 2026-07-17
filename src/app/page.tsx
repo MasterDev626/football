@@ -6,6 +6,7 @@ import { pragueCalendarDate } from "@/lib/time";
 import { ensureWeeklyGames } from "@/lib/weekly-roll";
 import { DayFilter } from "@/components/day-filter";
 import { GameCard } from "@/components/game-card";
+import { RecentResults } from "@/components/recent-results";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +28,22 @@ export default async function HomePage({
 
   const today = pragueCalendarDate();
 
-  const games = await prisma.game.findMany({
-    where: { date: { gte: today }, status: "APPROVED" },
-    include: { signups: true },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
+  const [games, recentResults] = await Promise.all([
+    prisma.game.findMany({
+      where: { date: { gte: today }, status: "APPROVED" },
+      include: { signups: true },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    }),
+    prisma.matchResult.findMany({
+      include: {
+        game: {
+          select: { id: true, title: true, date: true, venueName: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+  ]);
 
   const filtered = games.filter((g) => matchesDayFilter(g.date, day));
 
@@ -102,6 +114,8 @@ export default async function HomePage({
           </div>
         )}
       </section>
+
+      <RecentResults results={recentResults} />
     </>
   );
 }

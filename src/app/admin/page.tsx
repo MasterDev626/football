@@ -19,6 +19,8 @@ import {
   AdminRemoveButton,
   ApproveRejectButtons,
 } from "@/components/admin-controls";
+import { AdminMatchResultForm } from "@/components/admin-match-controls";
+import { tallyMotmVotes } from "@/lib/motm";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,8 @@ export default async function AdminPage() {
   const [
     pendingGames,
     liveGames,
+    resultGames,
+    matchResults,
     bans,
     events,
     recentEvents,
@@ -57,6 +61,28 @@ export default async function AdminPage() {
         signups: { orderBy: [{ listType: "asc" }, { position: "asc" }] },
       },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    }),
+    prisma.game.findMany({
+      where: { status: "APPROVED" },
+      include: {
+        signups: { orderBy: { position: "asc" } },
+        matchResult: {
+          include: {
+            goals: true,
+            votes: true,
+          },
+        },
+      },
+      orderBy: [{ date: "desc" }, { startTime: "desc" }],
+      take: 12,
+    }),
+    prisma.matchResult.findMany({
+      include: {
+        game: { select: { id: true, title: true, date: true } },
+        votes: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8,
     }),
     prisma.ban.findMany({
       where: { active: true },
@@ -121,6 +147,11 @@ export default async function AdminPage() {
         <Kpi label="Joins (7d)" value={String(joinsThisWeek)} hint={`${leavesThisWeek} dropouts`} />
         <Kpi label="Avg fill" value={`${fillAvg}%`} hint="Main list capacity" />
         <Kpi label="Active bans" value={String(bans.length)} hint="Blocked from joining" />
+        <Kpi
+          label="Results posted"
+          value={String(matchResults.length)}
+          hint={`${matchResults.filter((r) => r.motmName).length} MOTM announced`}
+        />
       </section>
 
       <section className="dash-card" id="approvals">
@@ -363,6 +394,103 @@ export default async function AdminPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            );
+          })
+        )}
+      </section>
+
+      <section className="dash-card" id="results">
+        <div className="dash-card-head">
+          <div>
+            <h2>Results & Player of the Match</h2>
+            <p>
+              Post Team A vs Team B, scorers, then let the community vote. You
+              announce the winner.
+            </p>
+          </div>
+        </div>
+
+        {matchResults.length > 0 ? (
+          <div className="dash-table-wrap" style={{ marginBottom: "1.25rem" }}>
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Game</th>
+                  <th>Score</th>
+                  <th>Votes</th>
+                  <th>MOTM</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matchResults.map((r) => {
+                  const top = tallyMotmVotes(r.votes)[0];
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <Link href={`/games/${r.game.id}`} className="dash-link">
+                          {r.game.title}
+                        </Link>
+                        <div className="dash-muted">
+                          {formatGameDate(r.game.date)}
+                        </div>
+                      </td>
+                      <td>
+                        {r.teamAName} {r.teamAScore}–{r.teamBScore} {r.teamBName}
+                      </td>
+                      <td>
+                        {r.votes.length}
+                        {top ? (
+                          <span className="dash-muted">
+                            {" "}
+                            · {top.playerName} leads
+                          </span>
+                        ) : null}
+                      </td>
+                      <td>
+                        {r.motmName ? (
+                          <span className="dash-pill ok">{r.motmName}</span>
+                        ) : r.votingOpen ? (
+                          <span className="dash-pill">Voting open</span>
+                        ) : (
+                          <span className="dash-muted">Pending</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {resultGames.length === 0 ? (
+          <p className="dash-empty">No published games yet.</p>
+        ) : (
+          resultGames.map((game) => {
+            const names = [
+              ...new Set(
+                game.signups.map((s) => s.name.split(" + ")[0].trim()),
+              ),
+            ];
+            return (
+              <div key={game.id} className="dash-game-block">
+                <div className="dash-game-head">
+                  <div>
+                    <Link href={`/games/${game.id}`} className="dash-link strong">
+                      {game.title}
+                    </Link>
+                    <p className="dash-muted">
+                      {formatGameDate(game.date)} · {game.startTime} ·{" "}
+                      {game.venueName}
+                    </p>
+                  </div>
+                </div>
+                <AdminMatchResultForm
+                  gameId={game.id}
+                  playerNames={names}
+                  existing={game.matchResult}
+                />
               </div>
             );
           })
