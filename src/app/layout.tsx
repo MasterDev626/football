@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Syne } from "next/font/google";
-import { SiteFooter } from "@/components/site-footer";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
@@ -34,10 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable} h-full`}>
-      <body className="min-h-full flex flex-col antialiased">
+      <body className="min-h-full flex flex-col antialiased has-mobile-nav">
         <SiteHeader />
         <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <MobileBottomNav />
       </body>
     </html>
   );
