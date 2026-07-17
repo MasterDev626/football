@@ -126,37 +126,113 @@ a {
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid rgba(213, 227, 216, 0.9);
+  background: #0d1a12;
+}
+
+.hero-photo {
+  position: absolute;
+  inset: 0;
   background:
-    linear-gradient(135deg, rgba(31, 107, 58, 0.06), transparent 45%),
-    linear-gradient(180deg, #f2faf3 0%, transparent 100%);
+    url("/images/hero-pitch.jpg") center / cover no-repeat;
+  transform: scale(1.04);
+  animation: hero-drift 22s ease-in-out infinite alternate;
+  filter: saturate(1.05) contrast(1.05);
+}
+
+.hero-photo-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg, rgba(8, 18, 12, 0.88) 0%, rgba(8, 18, 12, 0.72) 42%, rgba(8, 18, 12, 0.35) 70%, rgba(8, 18, 12, 0.55) 100%),
+    linear-gradient(180deg, rgba(8, 18, 12, 0.2) 0%, rgba(8, 18, 12, 0.55) 100%);
+  pointer-events: none;
+}
+
+@keyframes hero-drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-1.5%, -1%, 0);
+  }
 }
 
 .pitch-lines {
   position: absolute;
   inset: 0;
-  opacity: 0.14;
+  opacity: 0.1;
   background-image:
-    linear-gradient(90deg, transparent 0 48%, rgba(31, 107, 58, 0.35) 48% 52%, transparent 52%),
-    linear-gradient(rgba(31, 107, 58, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 107, 58, 0.12) 1px, transparent 1px);
+    linear-gradient(90deg, transparent 0 48%, rgba(196, 240, 77, 0.35) 48% 52%, transparent 52%),
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 100% 100%, 48px 48px, 48px 48px;
   mask-image: linear-gradient(180deg, #000 20%, transparent 95%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .hero {
   position: relative;
-  padding: clamp(2.8rem, 8vw, 4.8rem) 0 2.4rem;
+  z-index: 2;
+  padding: clamp(2.8rem, 8vw, 4.8rem) 0 2.6rem;
   overflow: hidden;
-  min-height: min(72vh, 560px);
-  display: flex;
+  min-height: min(78vh, 620px);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
   align-items: center;
+}
+
+@media (min-width: 920px) {
+  .hero {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
 }
 
 .hero-copy {
   position: relative;
   z-index: 1;
   max-width: 38rem;
+  color: #f4faf5;
+}
+
+.hero-side {
+  display: none;
+  justify-content: end;
+}
+
+@media (min-width: 920px) {
+  .hero-side {
+    display: flex;
+  }
+}
+
+.hero-side-card {
+  width: min(100%, 340px);
+  aspect-ratio: 4 / 5;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+  transform: rotate(2deg);
+  animation: float-card 6s ease-in-out infinite;
+}
+
+.hero-side-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes float-card {
+  0%,
+  100% {
+    transform: rotate(2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1deg) translateY(-8px);
+  }
 }
 
 .hero-kicker,
@@ -169,16 +245,21 @@ a {
   color: var(--pitch);
 }
 
+.hero-kicker {
+  color: var(--accent);
+}
+
 .hero-brand {
   font-family: var(--font-display);
   font-size: clamp(3.4rem, 9vw, 5.6rem);
   line-height: 0.92;
   letter-spacing: -0.045em;
   margin: 0 0 1.1rem;
+  color: #f7fff9;
 }
 
 .hero-brand span {
-  color: var(--pitch);
+  color: var(--accent);
   position: relative;
 }
 
@@ -209,7 +290,7 @@ a {
 
 .hero-lead {
   margin: 0 0 1.6rem;
-  color: var(--ink-soft);
+  color: rgba(230, 242, 233, 0.88);
   font-size: 1.12rem;
   line-height: 1.55;
   max-width: 30rem;
@@ -219,6 +300,17 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.hero .btn-ghost {
+  color: #f4faf5;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hero .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .hero-ball {
@@ -314,9 +406,22 @@ a {
 
 .game-card {
   position: relative;
+  display: block;
   padding: 1.35rem 1.4rem 1.25rem;
   overflow: hidden;
+  color: inherit;
+  cursor: pointer;
   transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.game-card:hover .card-cta {
+  color: var(--pitch-deep);
+  transform: translateX(3px);
+}
+
+.card-cta {
+  display: inline-block;
+  transition: transform 180ms ease, color 180ms ease;
 }
 
 .game-card-stripe {
@@ -403,6 +508,10 @@ a {
 .card-cta {
   color: var(--pitch);
   font-weight: 700;
+}
+
+a.game-card .game-card-title {
+  color: inherit;
 }
 
 .meta-list {

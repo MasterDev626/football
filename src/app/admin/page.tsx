@@ -4,6 +4,8 @@ import { isAdminAuthed } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { formatGameDate } from "@/lib/format";
 import { buildPlayerInsights } from "@/lib/insights";
+import { pragueCalendarDate } from "@/lib/time";
+import { ensureWeeklyGames } from "@/lib/weekly-roll";
 import {
   adminForceLeave,
   approveGame,
@@ -29,8 +31,9 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  await ensureWeeklyGames();
+
+  const startOfToday = pragueCalendarDate();
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const [
@@ -191,7 +194,7 @@ export default async function AdminPage() {
           <div className="dash-card-head">
             <div>
               <h2>Comes often</h2>
-              <p>Real join history from the app</p>
+              <p>Players with 2+ real joins (empty until people play)</p>
             </div>
           </div>
           <div className="dash-table-wrap">

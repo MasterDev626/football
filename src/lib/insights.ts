@@ -54,8 +54,9 @@ export function buildPlayerInsights(events: PlayerEvent[]): {
     };
   });
 
+  // Only surface regulars after real repeat play — never invent history.
   const regulars = [...all]
-    .filter((r) => r.joins >= 1)
+    .filter((r) => r.joins >= 2)
     .sort((a, b) => b.joins - a.joins || a.flakeScore - b.flakeScore)
     .slice(0, 12);
 

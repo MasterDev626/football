@@ -46,6 +46,10 @@ model Game {
   paymentBankCode  String?
   paymentMessage   String?
   allowPlusOne     Boolean    @default(false)
+  /// Weekly series id (e.g. mon-letna). When set, past dates auto-roll to next week with empty lists.
+  seriesKey        String?
+  /// 0=Sun … 6=Sat — matches Date.getUTCDay() for @db.Date storage.
+  recurringWeekday Int?
   venueId          String?
   venue            Venue?     @relation(fields: [venueId], references: [id])
   signups          Signup[]
@@ -54,6 +58,7 @@ model Game {
 
   @@index([date])
   @@index([status])
+  @@index([seriesKey, date])
 }
 
 model Signup {

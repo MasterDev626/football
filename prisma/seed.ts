@@ -1,35 +1,8 @@
-import { PrismaClient, ListType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { nanoid } from "nanoid";
 import { nextWeekdayDate } from "../src/lib/time";
 
 const prisma = new PrismaClient();
-
-async function addSignups(
-  gameId: string,
-  names: string[],
-  listType: ListType = ListType.MAIN,
-) {
-  for (let i = 0; i < names.length; i++) {
-    await prisma.signup.create({
-      data: {
-        gameId,
-        name: names[i],
-        listType,
-        position: i + 1,
-        leaveToken: nanoid(24),
-      },
-    });
-    await prisma.playerEvent.create({
-      data: {
-        nameKey: names[i].split("+")[0].trim().toLowerCase(),
-        displayName: names[i],
-        gameId,
-        type: "JOINED",
-      },
-    });
-  }
-}
 
 async function main() {
   await prisma.playerEvent.deleteMany();
@@ -61,15 +34,12 @@ async function main() {
   });
 
   const manageCodeHash = await hash("demo1234", 10);
+  const reviewedAt = new Date();
 
-  const monday = nextWeekdayDate(1);
-  const tuesday = nextWeekdayDate(2);
-  const saturday = nextWeekdayDate(6);
-
-  const mondayGame = await prisma.game.create({
+  const monday = await prisma.game.create({
     data: {
       title: "Monday night — Letna Park",
-      date: monday,
+      date: nextWeekdayDate(1),
       startTime: "21:00",
       endTime: "23:00",
       venueName: letna.name,
@@ -89,39 +59,18 @@ async function main() {
       organizerName: "Dome",
       manageCodeHash,
       status: "APPROVED",
-      reviewedAt: new Date(),
+      reviewedAt,
       reviewedBy: "seed",
+      seriesKey: "mon-letna",
+      recurringWeekday: 1,
       venueId: letna.id,
     },
   });
 
-  await addSignups(mondayGame.id, [
-    "Filip",
-    "Filip+1",
-    "Filip+2",
-    "Ivan",
-    "Valentyn",
-    "Amir",
-    "Alex",
-    "Evgeny",
-    "Vlad",
-    "Denis",
-    "David",
-    "Yevhen+1",
-    "Wahid",
-    "Mahmud",
-    "Andrii",
-    "Yevhen",
-    "Cesar",
-    "Fernando",
-    "Adys",
-    "Amir+1",
-  ]);
-
-  const tuesdayGame = await prisma.game.create({
+  const tuesday = await prisma.game.create({
     data: {
       title: "Tuesday turf — Nove Butovice",
-      date: tuesday,
+      date: nextWeekdayDate(2),
       startTime: "17:45",
       endTime: "20:00",
       venueName: noveButovice.name,
@@ -141,24 +90,18 @@ async function main() {
       organizerName: "Dome",
       manageCodeHash,
       status: "APPROVED",
-      reviewedAt: new Date(),
+      reviewedAt,
       reviewedBy: "seed",
+      seriesKey: "tue-butovice",
+      recurringWeekday: 2,
       venueId: noveButovice.id,
     },
   });
 
-  await addSignups(tuesdayGame.id, [
-    "Daniel (bibs+ball)",
-    "Alex",
-    "Efrain Sandoval Gamarra",
-    "Will",
-    "Fahed",
-  ]);
-
-  const saturdayGame = await prisma.game.create({
+  const saturday = await prisma.game.create({
     data: {
       title: "Saturday turf — Nove Butovice",
-      date: saturday,
+      date: nextWeekdayDate(6),
       startTime: "13:30",
       endTime: "16:00",
       venueName: noveButovice.name,
@@ -178,53 +121,19 @@ async function main() {
       organizerName: "Dome",
       manageCodeHash,
       status: "APPROVED",
-      reviewedAt: new Date(),
+      reviewedAt,
       reviewedBy: "seed",
+      seriesKey: "sat-butovice",
+      recurringWeekday: 6,
       venueId: noveButovice.id,
     },
   });
 
-  await addSignups(saturdayGame.id, [
-    "Dome (bibs+ball)",
-    "antonio",
-    "ricardo",
-    "Will",
-    "Zak",
-    "Vineet",
-    "Saini",
-  ]);
-
-  await prisma.game.create({
-    data: {
-      title: "Friday evening — pending review",
-      date: nextWeekdayDate(5),
-      startTime: "18:30",
-      endTime: "20:30",
-      venueName: letna.name,
-      address: letna.address,
-      mapsUrl: letna.mapsUrl,
-      surface: letna.surface,
-      priceCzk: 80,
-      format: "7vs7",
-      maxPlayers: 14,
-      subsNote: "Rolling subs",
-      allowPlusOne: false,
-      paymentAccount: "8013985001",
-      paymentBankCode: "5500",
-      paymentMessage: "Friday",
-      rules: "Submitted by an external organizer — awaiting approval.",
-      organizerName: "Alex",
-      manageCodeHash,
-      status: "PENDING",
-      venueId: letna.id,
-    },
-  });
-
-  console.log("Seeded Monday / Tuesday / Saturday + 1 pending Friday.");
+  console.log("Seeded empty weekly series (0 signups, 0 player history).");
   console.log("Organizer manage code: demo1234");
-  console.log(`Monday:   /games/${mondayGame.id}`);
-  console.log(`Tuesday:  /games/${tuesdayGame.id}`);
-  console.log(`Saturday: /games/${saturdayGame.id}`);
+  console.log(`Monday:   /games/${monday.id}`);
+  console.log(`Tuesday:  /games/${tuesday.id}`);
+  console.log(`Saturday: /games/${saturday.id}`);
 }
 
 main()

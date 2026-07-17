@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { weekdayKey } from "@/lib/format";
-import { BallMark } from "@/components/icons";
+import { pragueCalendarDate } from "@/lib/time";
+import { ensureWeeklyGames } from "@/lib/weekly-roll";
 import { DayFilter } from "@/components/day-filter";
 import { GameCard } from "@/components/game-card";
 
@@ -22,11 +23,12 @@ export default async function HomePage({
   const { day: dayParam } = await searchParams;
   const day = (dayParam || "all").toLowerCase();
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  await ensureWeeklyGames();
+
+  const today = pragueCalendarDate();
 
   const games = await prisma.game.findMany({
-    where: { date: { gte: startOfToday }, status: "APPROVED" },
+    where: { date: { gte: today }, status: "APPROVED" },
     include: { signups: true },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });
@@ -36,9 +38,10 @@ export default async function HomePage({
   return (
     <>
       <section className="hero-plane">
+        <div className="hero-photo" aria-hidden />
+        <div className="hero-photo-fade" aria-hidden />
         <div className="pitch-lines" aria-hidden />
         <div className="shell hero">
-          <BallMark className="hero-ball" />
           <div className="hero-copy animate-rise">
             <p className="hero-kicker">Prague friendlies</p>
             <h1 className="hero-brand">
@@ -46,7 +49,8 @@ export default async function HomePage({
             </h1>
             <p className="hero-lead">
               See who&apos;s playing, grab a spot on the list, pay Dome. Not
-              coming? Say so in the group. Joining? Do it here in seconds.
+              coming? Say so in the group. Joining? Tap a game — you&apos;re in
+              seconds.
             </p>
             <div className="hero-actions">
               <a href="#games" className="btn-primary btn-pulse">
@@ -55,6 +59,16 @@ export default async function HomePage({
               <Link href="/venues" className="btn-ghost">
                 Where we play
               </Link>
+            </div>
+          </div>
+          <div className="hero-side animate-rise" aria-hidden>
+            <div className="hero-side-card">
+              <img
+                src="/images/hero-stadium.jpg"
+                alt=""
+                width={640}
+                height={800}
+              />
             </div>
           </div>
         </div>
@@ -75,7 +89,7 @@ export default async function HomePage({
           <div className="empty-state">
             <p>No games for this filter yet.</p>
             <p>
-              <a href="#games" className="text-link">
+              <a href="/?day=all" className="text-link">
                 Check All days →
               </a>
             </p>

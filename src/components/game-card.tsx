@@ -19,7 +19,8 @@ export function GameCard({
   const fillPct = Math.min(100, Math.round((mainFilled / game.maxPlayers) * 100));
 
   return (
-    <article
+    <Link
+      href={`/games/${game.id}`}
       className="game-card animate-rise"
       style={{ animationDelay: `${index * 70}ms` }}
     >
@@ -30,9 +31,7 @@ export function GameCard({
           {full ? `Full · ${waiting} waiting` : `${spotsLeft} open`}
         </span>
       </div>
-      <h2 className="game-card-title">
-        <Link href={`/games/${game.id}`}>{game.title}</Link>
-      </h2>
+      <h2 className="game-card-title">{game.title}</h2>
       <ul className="meta-list">
         <li>
           <ClockIcon className="meta-icon" />
@@ -57,10 +56,8 @@ export function GameCard({
           {game.format} ·{" "}
           {game.priceCzk === 0 ? "Free" : `${game.priceCzk} CZK`}
         </span>
-        <Link href={`/games/${game.id}`} className="card-cta">
-          {full ? "Join waitlist" : "Join list"} →
-        </Link>
+        <span className="card-cta">{full ? "Open waitlist" : "Open game"} →</span>
       </div>
-    </article>
+    </Link>
   );
 }
