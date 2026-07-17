@@ -20,7 +20,7 @@ import {
 } from "@/lib/codes";
 import { prisma } from "@/lib/db";
 import { recordPlayerEvent } from "@/lib/events";
-import { parseScorerLines, VOTER_COOKIE } from "@/lib/motm";
+import { parseScorerLines, motmCandidateNames, VOTER_COOKIE } from "@/lib/motm";
 import { isWithinLeaveCutoff, nameKey } from "@/lib/time";
 import { nanoid } from "nanoid";
 
@@ -599,6 +599,18 @@ export async function saveMatchResult(
   const teamBScore = Number(formData.get("teamBScore"));
   const scorersA = String(formData.get("scorersA") || "");
   const scorersB = String(formData.get("scorersB") || "");
+  const teamALineup =
+    String(formData.get("teamALineup") || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join("\n") || null;
+  const teamBLineup =
+    String(formData.get("teamBLineup") || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .join("\n") || null;
   const notes = String(formData.get("notes") || "").trim() || null;
   const votingOpen = formData.get("votingOpen") === "on";
 
@@ -633,6 +645,8 @@ export async function saveMatchResult(
           teamBName,
           teamAScore,
           teamBScore,
+          teamALineup,
+          teamBLineup,
           notes,
           votingOpen: existing.motmName ? false : votingOpen,
           goals: { create: goals },
@@ -646,6 +660,8 @@ export async function saveMatchResult(
           teamBName,
           teamAScore,
           teamBScore,
+          teamALineup,
+          teamBLineup,
           notes,
           votingOpen,
           goals: { create: goals },
@@ -656,6 +672,7 @@ export async function saveMatchResult(
 
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/");
+  revalidatePath("/results");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -689,14 +706,16 @@ export async function voteMotm(
 
   const playerNameKey = nameKey(playerName);
   const candidates = new Set(
-    [
-      ...result.game.signups.map((s) => nameKey(s.name.split(" + ")[0])),
-      ...result.goals.map((g) => g.scorerNameKey),
-    ].filter(Boolean),
+    motmCandidateNames({
+      teamALineup: result.teamALineup,
+      teamBLineup: result.teamBLineup,
+      goals: result.goals,
+      signupNames: result.game.signups.map((s) => s.name.split(" + ")[0]),
+    }).map((n) => nameKey(n)),
   );
 
   if (candidates.size > 0 && !candidates.has(playerNameKey)) {
-    return { ok: false, error: "Pick someone from this match." };
+    return { ok: false, error: "Pick someone from Team A or Team B." };
   }
 
   const jar = await cookies();
@@ -735,6 +754,7 @@ export async function voteMotm(
 
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/admin");
+  revalidatePath("/results");
   return { ok: true };
 }
 
@@ -767,6 +787,7 @@ export async function announceMotm(
 
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/");
+  revalidatePath("/results");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -796,5 +817,6 @@ export async function setMotmVoting(
 
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/admin");
+  revalidatePath("/results");
   return { ok: true };
 }

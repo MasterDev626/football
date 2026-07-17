@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { ListType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatGameDate } from "@/lib/format";
-import { VOTER_COOKIE } from "@/lib/motm";
-import { isWithinLeaveCutoff, leaveCutoffAt, nameKey } from "@/lib/time";
+import { motmCandidateNames, VOTER_COOKIE } from "@/lib/motm";
+import { isWithinLeaveCutoff, leaveCutoffAt } from "@/lib/time";
 import { JoinForm } from "@/components/join-form";
 import { LeavePanel } from "@/components/leave-panel";
 import { ManageBanner } from "@/components/manage-banner";
@@ -63,16 +63,12 @@ export default async function GamePage({
   const isPending = game.status === "PENDING" || pending === "1";
   const canJoin = game.status === "APPROVED" && !game.matchResult;
 
-  const candidates = [
-    ...new Map(
-      [
-        ...main.map((s) => s.name.split(" + ")[0].trim()),
-        ...(game.matchResult?.goals.map((g) => g.scorerName) ?? []),
-      ]
-        .filter((n) => n.length >= 2)
-        .map((n) => [nameKey(n), n] as const),
-    ).values(),
-  ].sort((a, b) => a.localeCompare(b));
+  const candidates = motmCandidateNames({
+    teamALineup: game.matchResult?.teamALineup,
+    teamBLineup: game.matchResult?.teamBLineup,
+    goals: game.matchResult?.goals,
+    signupNames: main.map((s) => s.name.split(" + ")[0].trim()),
+  });
 
   const jar = await cookies();
   const voterKey = jar.get(VOTER_COOKIE)?.value;
@@ -181,6 +177,7 @@ export default async function GamePage({
             result={game.matchResult}
             candidates={candidates}
             alreadyVotedFor={myVote?.playerName}
+            signupNames={main.map((s) => s.name.split(" + ")[0].trim())}
           />
         ) : null}
 

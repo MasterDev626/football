@@ -71,6 +71,10 @@ model MatchResult {
   teamBName   String      @default("Team B")
   teamAScore  Int
   teamBScore  Int
+  /// Newline-separated names for Team A (admin-entered lineups).
+  teamALineup String?
+  /// Newline-separated names for Team B (admin-entered lineups).
+  teamBLineup String?
   votingOpen  Boolean     @default(true)
   motmName    String?
   motmNameKey String?

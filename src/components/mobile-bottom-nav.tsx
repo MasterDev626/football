@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 function IconGames({ className }: { className?: string }) {
@@ -74,20 +73,12 @@ function IconAdmin({ className }: { className?: string }) {
 const items = [
   { href: "/#games", label: "Games", icon: IconGames, id: "games" },
   { href: "/venues", label: "Venues", icon: IconVenues, id: "venues" },
-  { href: "/#results", label: "Results", icon: IconResults, id: "results" },
+  { href: "/results", label: "Results", icon: IconResults, id: "results" },
   { href: "/admin", label: "Admin", icon: IconAdmin, id: "admin" },
 ] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const [hash, setHash] = useState("");
-
-  useEffect(() => {
-    const sync = () => setHash(window.location.hash.replace("#", ""));
-    sync();
-    window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
-  }, [pathname]);
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -96,9 +87,9 @@ export function MobileBottomNav() {
   function isActive(id: string): boolean {
     if (id === "venues") return pathname.startsWith("/venues");
     if (id === "admin") return pathname.startsWith("/admin");
-    if (id === "results") return pathname === "/" && hash === "results";
+    if (id === "results") return pathname.startsWith("/results");
     if (id === "games") {
-      return pathname === "/" && hash !== "results";
+      return pathname === "/" || pathname.startsWith("/games");
     }
     return false;
   }
@@ -115,11 +106,6 @@ export function MobileBottomNav() {
                 href={item.href}
                 className={`mobile-tab ${active ? "is-active" : ""}`}
                 aria-current={active ? "page" : undefined}
-                onClick={() => {
-                  if (item.href.includes("#")) {
-                    setHash(item.href.split("#")[1] || "");
-                  }
-                }}
               >
                 <span className="mobile-tab-icon">
                   <Icon />

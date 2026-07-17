@@ -86,6 +86,26 @@ export function AdminMatchResultForm({
         </div>
         <div className="admin-match-row">
           <label>
+            <span>Team A lineup (one name per line)</span>
+            <textarea
+              name="teamALineup"
+              rows={4}
+              defaultValue={existing?.teamALineup ?? ""}
+              placeholder={"Will\nDome\nAlex"}
+            />
+          </label>
+          <label>
+            <span>Team B lineup (one name per line)</span>
+            <textarea
+              name="teamBLineup"
+              rows={4}
+              defaultValue={existing?.teamBLineup ?? ""}
+              placeholder={"Zak\nVineet\nAntonio"}
+            />
+          </label>
+        </div>
+        <div className="admin-match-row">
+          <label>
             <span>Scorers A (one per line, optional min e.g. Will|23)</span>
             <textarea name="scorersA" rows={3} defaultValue={scorersA} />
           </label>
@@ -94,6 +114,10 @@ export function AdminMatchResultForm({
             <textarea name="scorersB" rows={3} defaultValue={scorersB} />
           </label>
         </div>
+        <p className="dash-muted" style={{ margin: 0 }}>
+          Only admins enter lineups and goals. The community can only vote for
+          Player of the Match.
+        </p>
         <label>
           <span>Notes (optional)</span>
           <input name="notes" defaultValue={existing?.notes ?? ""} />

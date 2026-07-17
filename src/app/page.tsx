@@ -6,6 +6,7 @@ import { pragueCalendarDate } from "@/lib/time";
 import { ensureWeeklyGames } from "@/lib/weekly-roll";
 import { DayFilter } from "@/components/day-filter";
 import { GameCard } from "@/components/game-card";
+import { HostGameCta } from "@/components/host-game-cta";
 import { RecentResults } from "@/components/recent-results";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,8 @@ export default async function HomePage({
       </section>
 
       <RecentResults results={recentResults} />
+
+      <HostGameCta />
     </>
   );
 }

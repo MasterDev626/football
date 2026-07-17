@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import type { MatchGoal, MatchResult, MotmVote } from "@prisma/client";
 import { voteMotm, type ActionResult } from "@/lib/actions";
-import { goalsByTeam, tallyMotmVotes } from "@/lib/motm";
+import { goalsByTeam, lineupPlayers, tallyMotmVotes } from "@/lib/motm";
 
 type ResultWithRelations = MatchResult & {
   goals: MatchGoal[];
@@ -15,16 +15,22 @@ export function MatchResultPanel({
   result,
   candidates,
   alreadyVotedFor,
+  signupNames = [],
+  title,
 }: {
   gameId: string;
   result: ResultWithRelations;
   candidates: string[];
   alreadyVotedFor?: string | null;
+  signupNames?: string[];
+  title?: string;
 }) {
   const { a, b } = goalsByTeam(result.goals);
+  const { teamA, teamB } = lineupPlayers(result);
   const tallies = tallyMotmVotes(result.votes);
   const announced = Boolean(result.motmName);
   const canVote = result.votingOpen && !announced;
+  const hasLineups = teamA.length > 0 || teamB.length > 0;
 
   const [state, formAction, pending] = useActionState<
     ActionResult | null,
@@ -34,6 +40,8 @@ export function MatchResultPanel({
   return (
     <section className="match-result panel animate-rise">
       <p className="detail-kicker">Match result</p>
+      {title ? <h2 className="match-result-title">{title}</h2> : null}
+
       <div className="scoreboard">
         <div className="scoreboard-team">
           <span>{result.teamAName}</span>
@@ -46,40 +54,83 @@ export function MatchResultPanel({
         </div>
       </div>
 
-      {(a.length > 0 || b.length > 0) && (
-        <div className="scorer-grid">
-          <div>
-            <h3>Scorers · {result.teamAName}</h3>
-            {a.length === 0 ? (
+      <div className="lineup-grid">
+        <div>
+          <h3>Who played · {result.teamAName}</h3>
+          {hasLineups ? (
+            teamA.length === 0 ? (
               <p className="dash-muted">—</p>
             ) : (
-              <ul>
-                {a.map((g) => (
-                  <li key={g.id}>
-                    {g.scorerName}
-                    {g.minute != null ? ` ${g.minute}'` : ""}
-                  </li>
+              <ul className="lineup-list">
+                {teamA.map((name) => (
+                  <li key={`a-${name}`}>{name}</li>
                 ))}
               </ul>
-            )}
-          </div>
-          <div>
-            <h3>Scorers · {result.teamBName}</h3>
-            {b.length === 0 ? (
-              <p className="dash-muted">—</p>
-            ) : (
-              <ul>
-                {b.map((g) => (
-                  <li key={g.id}>
-                    {g.scorerName}
-                    {g.minute != null ? ` ${g.minute}'` : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+            )
+          ) : signupNames.length > 0 ? (
+            <ul className="lineup-list">
+              {signupNames.map((name) => (
+                <li key={`s-${name}`}>{name}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="dash-muted">Lineups not posted yet.</p>
+          )}
         </div>
-      )}
+        <div>
+          <h3>Who played · {result.teamBName}</h3>
+          {hasLineups ? (
+            teamB.length === 0 ? (
+              <p className="dash-muted">—</p>
+            ) : (
+              <ul className="lineup-list">
+                {teamB.map((name) => (
+                  <li key={`b-${name}`}>{name}</li>
+                ))}
+              </ul>
+            )
+          ) : (
+            <p className="dash-muted">
+              {signupNames.length > 0
+                ? "Teams not split yet — full list on the left."
+                : "Lineups not posted yet."}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="scorer-grid">
+        <div>
+          <h3>Scorers · {result.teamAName}</h3>
+          {a.length === 0 ? (
+            <p className="dash-muted">No goals logged</p>
+          ) : (
+            <ul>
+              {a.map((g) => (
+                <li key={g.id}>
+                  {g.scorerName}
+                  {g.minute != null ? ` ${g.minute}'` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <h3>Scorers · {result.teamBName}</h3>
+          {b.length === 0 ? (
+            <p className="dash-muted">No goals logged</p>
+          ) : (
+            <ul>
+              {b.map((g) => (
+                <li key={g.id}>
+                  {g.scorerName}
+                  {g.minute != null ? ` ${g.minute}'` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
 
       {result.notes ? <p className="match-notes">{result.notes}</p> : null}
 
@@ -94,14 +145,14 @@ export function MatchResultPanel({
             <h3>Vote Player of the Match</h3>
             <p>
               {canVote
-                ? "One vote per person. Admin announces the winner."
+                ? "Pick anyone from Team A or Team B. Only the community votes — admin announces the winner."
                 : "Voting is closed — waiting for the announcement."}
             </p>
           </div>
 
           {tallies.length > 0 ? (
             <ul className="motm-tally">
-              {tallies.slice(0, 5).map((t) => (
+              {tallies.slice(0, 8).map((t) => (
                 <li key={t.playerNameKey}>
                   <span>{t.playerName}</span>
                   <em>
@@ -114,7 +165,7 @@ export function MatchResultPanel({
             <p className="form-hint">No votes yet — be the first.</p>
           )}
 
-          {canVote ? (
+          {canVote && candidates.length > 0 ? (
             <form action={formAction} className="motm-vote-form">
               <input type="hidden" name="gameId" value={gameId} />
               <label className="field">
@@ -129,7 +180,7 @@ export function MatchResultPanel({
                 />
               </label>
               <label className="field">
-                <span>Your pick</span>
+                <span>Your pick (Team A or Team B)</span>
                 <select name="playerName" required defaultValue="">
                   <option value="" disabled>
                     Select a player
@@ -162,6 +213,12 @@ export function MatchResultPanel({
                 </p>
               ) : null}
             </form>
+          ) : null}
+
+          {canVote && candidates.length === 0 ? (
+            <p className="form-hint">
+              Voting opens once admin posts the Team A / Team B lineups.
+            </p>
           ) : null}
         </div>
       )}
