@@ -28,10 +28,10 @@ export default async function GamePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ manageCode?: string }>;
+  searchParams: Promise<{ manageCode?: string; pending?: string }>;
 }) {
   const { id } = await params;
-  const { manageCode } = await searchParams;
+  const { manageCode, pending } = await searchParams;
 
   const game = await prisma.game.findUnique({
     where: { id },
@@ -39,6 +39,7 @@ export default async function GamePage({
   });
 
   if (!game) notFound();
+  if (game.status === "REJECTED") notFound();
 
   const main = game.signups.filter((s) => s.listType === ListType.MAIN);
   const waiting = game.signups.filter((s) => s.listType === ListType.WAITING);
@@ -48,10 +49,21 @@ export default async function GamePage({
     game.paymentMessage ||
     formatGameDate(game.date).split(" ")[0] ||
     "Game";
+  const isPending = game.status === "PENDING" || pending === "1";
+  const canJoin = game.status === "APPROVED";
 
   return (
     <div className="shell detail-layout">
       <div>
+        {isPending ? (
+          <div className="pending-banner animate-rise" role="status">
+            <strong>Awaiting admin approval</strong>
+            <p>
+              This game is not on the homepage yet. Players can&apos;t join until
+              Dome / MasterDevops publishes it.
+            </p>
+          </div>
+        ) : null}
         <ManageBanner gameId={game.id} manageCode={manageCode} />
         <article className="panel animate-rise">
           <p className="detail-kicker">{formatGameDate(game.date)}</p>
@@ -143,12 +155,22 @@ export default async function GamePage({
       </div>
 
       <aside className="sticky-aside">
-        <JoinForm gameId={game.id} allowPlusOne={game.allowPlusOne} />
-        <LeavePanel
-          gameId={game.id}
-          cutoffLocked={cutoffLocked}
-          priceCzk={game.priceCzk}
-        />
+        {canJoin ? (
+          <>
+            <JoinForm gameId={game.id} allowPlusOne={game.allowPlusOne} />
+            <LeavePanel
+              gameId={game.id}
+              cutoffLocked={cutoffLocked}
+              priceCzk={game.priceCzk}
+            />
+          </>
+        ) : (
+          <div className="join-form">
+            <p className="form-hint" style={{ margin: 0 }}>
+              Joining opens after an admin publishes this game.
+            </p>
+          </div>
+        )}
         <p className="form-hint" style={{ marginTop: "1rem" }}>
           <Link href="/" className="text-link">
             ← Back to games

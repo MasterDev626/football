@@ -23,9 +23,9 @@ model Venue {
 }
 
 model Game {
-  id               String   @id @default(cuid())
+  id               String     @id @default(cuid())
   title            String
-  date             DateTime @db.Date
+  date             DateTime   @db.Date
   startTime        String
   endTime          String
   venueName        String
@@ -34,22 +34,26 @@ model Game {
   surface          String
   priceCzk         Int
   format           String
-  maxPlayers       Int      @default(18)
+  maxPlayers       Int        @default(18)
   subsNote         String?
   rules            String?
   organizerName    String
   manageCodeHash   String
+  status           GameStatus @default(PENDING)
+  reviewedAt       DateTime?
+  reviewedBy       String?
   paymentAccount   String?
   paymentBankCode  String?
   paymentMessage   String?
-  allowPlusOne     Boolean  @default(false)
+  allowPlusOne     Boolean    @default(false)
   venueId          String?
-  venue            Venue?   @relation(fields: [venueId], references: [id])
+  venue            Venue?     @relation(fields: [venueId], references: [id])
   signups          Signup[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([date])
+  @@index([status])
 }
 
 model Signup {
@@ -95,6 +99,12 @@ model PlayerEvent {
   @@index([nameKey])
   @@index([type])
   @@index([createdAt])
+}
+
+enum GameStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum ListType {

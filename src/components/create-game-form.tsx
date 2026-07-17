@@ -153,7 +153,7 @@ export function CreateGameForm({ venues }: { venues: VenueOption[] }) {
       </label>
 
       <button type="submit" className="btn-primary" disabled={pending}>
-        {pending ? "Posting…" : "Post friendly"}
+        {pending ? "Submitting…" : "Submit for approval"}
       </button>
       {state && !state.ok ? (
         <p className="form-error" role="alert">
@@ -161,7 +161,8 @@ export function CreateGameForm({ venues }: { venues: VenueOption[] }) {
         </p>
       ) : null}
       <p className="form-hint">
-        After posting you get a manage code — save it to edit the list.
+        You&apos;ll get a manage code to keep. The game stays private until an
+        admin publishes it to the homepage.
       </p>
     </form>
   );

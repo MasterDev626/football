@@ -88,6 +88,9 @@ async function main() {
         "You can bring only +1 and I need to know the name.\nList goes up — feel free to invite a friend.\nDon't turn up on the day = banned until you pay + 1 week.\nBad behaviour and complaints on the pitch will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
       organizerName: "Dome",
       manageCodeHash,
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      reviewedBy: "seed",
       venueId: letna.id,
     },
   });
@@ -137,6 +140,9 @@ async function main() {
         "Being on the list and not showing up on the day results in a one week ban plus 60 CZK of the missed game.\nComplaining on the pitch will not be accepted and will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
       organizerName: "Dome",
       manageCodeHash,
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      reviewedBy: "seed",
       venueId: noveButovice.id,
     },
   });
@@ -171,6 +177,9 @@ async function main() {
         "Being on the list and not showing up results in a one week ban plus 60 CZK of the missed game.\nComplaining on the pitch will not be accepted and will result in a temporary ban.\nLeave cutoff: 1 hour before kickoff (after that only Dome can remove you).",
       organizerName: "Dome",
       manageCodeHash,
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      reviewedBy: "seed",
       venueId: noveButovice.id,
     },
   });
@@ -185,7 +194,33 @@ async function main() {
     "Saini",
   ]);
 
-  console.log("Seeded Monday / Tuesday / Saturday friendlies.");
+  await prisma.game.create({
+    data: {
+      title: "Friday evening — pending review",
+      date: nextWeekdayDate(5),
+      startTime: "18:30",
+      endTime: "20:30",
+      venueName: letna.name,
+      address: letna.address,
+      mapsUrl: letna.mapsUrl,
+      surface: letna.surface,
+      priceCzk: 80,
+      format: "7vs7",
+      maxPlayers: 14,
+      subsNote: "Rolling subs",
+      allowPlusOne: false,
+      paymentAccount: "8013985001",
+      paymentBankCode: "5500",
+      paymentMessage: "Friday",
+      rules: "Submitted by an external organizer — awaiting approval.",
+      organizerName: "Alex",
+      manageCodeHash,
+      status: "PENDING",
+      venueId: letna.id,
+    },
+  });
+
+  console.log("Seeded Monday / Tuesday / Saturday + 1 pending Friday.");
   console.log("Organizer manage code: demo1234");
   console.log(`Monday:   /games/${mondayGame.id}`);
   console.log(`Tuesday:  /games/${tuesdayGame.id}`);

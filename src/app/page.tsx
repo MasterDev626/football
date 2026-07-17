@@ -26,7 +26,7 @@ export default async function HomePage({
   startOfToday.setHours(0, 0, 0, 0);
 
   const games = await prisma.game.findMany({
-    where: { date: { gte: startOfToday } },
+    where: { date: { gte: startOfToday }, status: "APPROVED" },
     include: { signups: true },
     orderBy: [{ date: "asc" }, { startTime: "asc" }],
   });

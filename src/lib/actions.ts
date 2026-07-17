@@ -74,6 +74,7 @@ export async function createGame(
 
   const manageCode = generateManageCode();
   const manageCodeHash = await hashManageCode(manageCode);
+  const admin = await isAdminAuthed();
 
   const game = await prisma.game.create({
     data: {
@@ -97,13 +98,19 @@ export async function createGame(
       paymentBankCode,
       paymentMessage,
       allowPlusOne,
+      status: admin ? "APPROVED" : "PENDING",
+      reviewedAt: admin ? new Date() : null,
+      reviewedBy: admin ? "admin" : null,
     },
   });
 
   revalidatePath("/");
   revalidatePath("/venues");
   revalidatePath("/admin");
-  redirect(`/games/${game.id}?manageCode=${manageCode}`);
+  if (admin) {
+    redirect(`/games/${game.id}?manageCode=${manageCode}`);
+  }
+  redirect(`/games/${game.id}?manageCode=${manageCode}&pending=1`);
 }
 
 export async function joinGame(
@@ -145,6 +152,12 @@ export async function joinGame(
 
       if (!game) {
         throw new Error("Game not found.");
+      }
+
+      if (game.status !== "APPROVED") {
+        throw new Error(
+          "This game is not live yet — waiting for organizer approval.",
+        );
       }
 
       if (bringingPlusOne && !game.allowPlusOne) {
@@ -425,6 +438,56 @@ export async function liftBan(
   });
 
   revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function approveGame(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Admin only." };
+  }
+  const gameId = String(formData.get("gameId") || "");
+  if (!gameId) return { ok: false, error: "Missing game." };
+
+  await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      reviewedBy: "admin",
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath(`/games/${gameId}`);
+  return { ok: true };
+}
+
+export async function rejectGame(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Admin only." };
+  }
+  const gameId = String(formData.get("gameId") || "");
+  if (!gameId) return { ok: false, error: "Missing game." };
+
+  await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      status: "REJECTED",
+      reviewedAt: new Date(),
+      reviewedBy: "admin",
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath(`/games/${gameId}`);
   return { ok: true };
 }
 

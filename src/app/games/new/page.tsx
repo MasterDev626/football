@@ -23,8 +23,8 @@ export default async function NewGamePage() {
     <div className="shell section" style={{ paddingTop: "2.5rem" }}>
       <h1 className="page-title">Post a friendly</h1>
       <p className="page-lead">
-        Same details as the group chat message — date, pitch, price, house rules
-        — plus a live main list and waiting list.
+        Submit your game for review. It appears on the homepage only after
+        Dome / MasterDevops approves it in Admin.
       </p>
       <CreateGameForm venues={venues} />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { adminLogin, type ActionResult } from "@/lib/actions";
 
 export default function AdminLoginPage() {
@@ -10,24 +11,26 @@ export default function AdminLoginPage() {
   >(adminLogin, null);
 
   return (
-    <div className="shell section admin-shell">
-      <h1 className="page-title">Dome admin</h1>
-      <p className="page-lead">
-        Private organizer view — only MasterDevops and Dome emails can sign in.
-        Everyone else is refused.
-      </p>
-      <form action={formAction} className="create-form animate-rise">
-        <label className="field">
+    <div className="dash-login">
+      <form action={formAction} className="dash-login-card">
+        <div className="dash-brand compact">
+          <span className="dash-brand-mark">FP</span>
+          <div>
+            <strong>Organizer login</strong>
+            <p>MasterDevops & Dome only</p>
+          </div>
+        </div>
+        <label className="dash-field">
           <span>Email</span>
           <input
             name="email"
             type="email"
             required
             autoComplete="username"
-            placeholder="your@email.com"
+            placeholder="you@email.com"
           />
         </label>
-        <label className="field">
+        <label className="dash-field">
           <span>Password</span>
           <input
             name="password"
@@ -36,7 +39,7 @@ export default function AdminLoginPage() {
             autoComplete="current-password"
           />
         </label>
-        <button type="submit" className="btn-primary" disabled={pending}>
+        <button type="submit" className="dash-btn dash-btn-primary wide" disabled={pending}>
           {pending ? "Signing in…" : "Open dashboard"}
         </button>
         {state && !state.ok ? (
@@ -44,6 +47,9 @@ export default function AdminLoginPage() {
             {state.error}
           </p>
         ) : null}
+        <Link href="/" className="dash-muted center">
+          ← Back to public site
+        </Link>
       </form>
     </div>
   );
